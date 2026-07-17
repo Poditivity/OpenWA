@@ -997,15 +997,17 @@ export class MessageService {
   private async simulateTypingIfEnabled(engine: IWhatsAppEngine, chatId: string, text: string): Promise<void> {
     const { simulateTyping, simulateTypingMaxMs } = resolveFeatureFlags(this.configService);
     if (!simulateTyping) return;
+    const planned = Math.min(simulateTypingMaxMs, 500 + text.length * 45);
+    const jittered = Math.round(planned * (0.85 + Math.random() * 0.3)); // ±15% so it isn't metronomic
+    // The typing indicator is best-effort and can throw on some WhatsApp Web builds (the presence call
+    // is version-sensitive). The humanising delay must run regardless: the pacing — not the visual
+    // "typing…" bubble — is the anti-automation guardrail, so a failed indicator must not skip it.
     try {
       await engine.sendChatState(chatId, 'typing');
-      const maxMs = simulateTypingMaxMs;
-      const planned = Math.min(maxMs, 500 + text.length * 45);
-      const jittered = Math.round(planned * (0.85 + Math.random() * 0.3)); // ±15% so it isn't metronomic
-      await new Promise(resolve => setTimeout(resolve, jittered));
     } catch (error) {
-      this.logger.warn(`simulateTyping skipped: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.warn(`typing indicator skipped: ${error instanceof Error ? error.message : String(error)}`);
     }
+    await new Promise(resolve => setTimeout(resolve, jittered));
   }
 
   /**

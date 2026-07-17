@@ -83,6 +83,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stopping or deleting a session id that does not exist no longer leaves an entry in the teardown-mark set, which nothing could clear and which grew by one for every such `404`.
 - A plugin loaded from the legacy plugins directory can be enabled, uninstalled and updated like any other, and its config UI loads; every operation built its path as `<plugins.dir>/<id>` while the package was elsewhere, so enabling left it in `ERROR` and uninstall silently kept the code.
 - Auto-starting previously authenticated sessions no longer delays the HTTP listener; NestJS binds the port only after every bootstrap hook finishes, so a host with several sessions kept the port closed past the Helm chart's liveness budget and the Docker `HEALTHCHECK`.
+- **An API key's session allow-list showed ids that can never match** — `allowedSessions` is matched by exact equality against the session id, but the example was `['session-uuid-1', 'session-uuid-2']`, which would scope a key to nothing and deny every request. It now shows real UUIDs.
+- **The anti-automation send delay no longer depends on the typing indicator succeeding.** The
+  humanising pre-send pause in `simulateTypingIfEnabled` was placed *after* `sendChatState('typing')`
+  inside the same `try`, so when the presence call throws, control jumps to `catch` and the delay is
+  skipped — silently removing the send pacing that is the actual ban-avoidance guardrail, leaving
+  only the failure logged. On the whatsapp-web.js engine `sendChatState` already swallows presence
+  failures internally, so its delay was unaffected; but the Baileys adapter's `sendChatState`
+  propagates them, so a transient presence error there dropped the pacing entirely. The delay is now
+  computed up front and always awaited regardless of engine; the typing indicator is isolated in its
+  own best-effort `try/catch`. This governs only the *pacing* — the visual "typing…" bubble itself
+  remains best-effort and can still fail independently.
 
 ### Security
 
