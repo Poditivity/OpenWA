@@ -80,6 +80,11 @@ export const BLANK_SHADOWED_ENV_KEYS: string[] = [
   // never reached the container. They are blank-forwarded like everything else here so the forward
   // itself cannot pin them off.
   'WEBHOOK_CONTACT_DETAILS',
+  // Allowed browser origins. Blank must CLEAR rather than pin: an empty string is not the same as
+  // unset here — `resolveCorsPolicy` reads unset as the `['*']` default (a working dev policy) but
+  // an empty string as "no origins allowed", which would block every cross-origin browser request
+  // in development purely because compose forwarded the key.
+  'CORS_ORIGINS',
   'BAILEYS_MARK_ONLINE_ON_CONNECT',
   'BAILEYS_SYNC_FULL_HISTORY',
   'ALLOW_UNSIGNED_INGRESS',

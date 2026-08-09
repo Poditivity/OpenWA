@@ -253,6 +253,12 @@ services:
       - PLUGIN_DOWNLOAD_ALLOW_INSECURE_REDIRECTS=${PLUGIN_DOWNLOAD_ALLOW_INSECURE_REDIRECTS:-false}
       # Security
       - API_MASTER_KEY=${API_MASTER_KEY:-}
+      # Browser origins allowed to call the API cross-origin (comma-separated). In production a
+      # wildcard is refused and an unset value blocks every cross-origin browser request, so a
+      # separately-hosted front-end MUST list its origin here — and without this line the value in
+      # .env never reaches the container (this file has no env_file), leaving NODE_ENV=development
+      # as the only way to get a working CORS policy under Docker.
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
       - TRUSTED_PROXIES=${TRUSTED_PROXIES:-}
       # Forward the plain-HTTP dashboard CSP override; unset preserves the application default.
       - CSP_UPGRADE_INSECURE_REQUESTS=${CSP_UPGRADE_INSECURE_REQUESTS:-}
